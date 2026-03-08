@@ -1,12 +1,13 @@
-# CLAUDE.MD -- Academic Project Development with Claude Code
+# CLAUDE.MD -- Economics Research Paper Workflow
 
-<!-- HOW TO USE: Replace [BRACKETED PLACEHOLDERS] with your project info.
-     Customize Beamer environments and CSS classes for your theme.
+<!-- HOW TO USE: This is a general-purpose economics paper writing agent.
+     Paper-specific details (title, data, hypotheses) go in MEMORY.md.
      Keep this file under ~150 lines — Claude loads it every session.
      See the guide at docs/workflow-guide.html for full documentation. -->
 
-**Project:** [YOUR PROJECT NAME]
-**Institution:** [YOUR INSTITUTION]
+**Domain:** Economics Research (Empirical & Applied)
+**Econometrics Software:** Stata (connected via MCP)
+**Output Format:** Word (.docx)
 **Branch:** main
 
 ---
@@ -14,30 +15,43 @@
 ## Core Principles
 
 - **Plan first** -- enter plan mode before non-trivial tasks; save plans to `quality_reports/plans/`
-- **Verify after** -- compile/render and confirm output at the end of every task
-- **Single source of truth** -- Beamer `.tex` is authoritative; Quarto `.qmd` derives from it
+- **Verify after** -- run Stata code and confirm output at the end of every task
+- **Single source of truth** -- Stata `.do` files are authoritative for analysis; Word `.docx` is authoritative for prose
 - **Quality gates** -- nothing ships below 80/100
 - **[LEARN] tags** -- when corrected, save `[LEARN:category] wrong → right` to MEMORY.md
+- **Reproducibility** -- every result in the paper must trace back to a specific `.do` file and log
 
 ---
 
 ## Folder Structure
 
 ```
-[YOUR-PROJECT]/
+project/
 ├── CLAUDE.MD                    # This file
 ├── .claude/                     # Rules, skills, agents, hooks
-├── Bibliography_base.bib        # Centralized bibliography
-├── Figures/                     # Figures and images
-├── Preambles/header.tex         # LaTeX headers
-├── Slides/                      # Beamer .tex files
-├── Quarto/                      # RevealJS .qmd files + theme
-├── docs/                        # GitHub Pages (auto-generated)
-├── scripts/                     # Utility scripts + R code
+├── Paper/                       # Word .docx drafts (main output)
+│   ├── main.docx                # Current working draft
+│   ├── tables/                  # Formatted tables (.docx or .rtf from Stata)
+│   └── figures/                 # Figures (.png, .pdf from Stata)
+├── Code/
+│   ├── master.do                # Master do-file (runs everything in order)
+│   ├── 00_setup.do              # Paths, packages, settings
+│   ├── 01_dataprep/             # Data cleaning and variable construction
+│   ├── 02_analysis/             # Main regressions and estimation
+│   ├── 03_robustness/           # Robustness checks and sensitivity
+│   └── 04_appendix/             # Appendix results
+├── Data/
+│   ├── raw/                     # Source data (never modified)
+│   └── derived/                 # Processed datasets
+├── Output/
+│   ├── tables/                  # Raw Stata output (.csv, .tex, .rtf)
+│   ├── figures/                 # Graphs (.png, .pdf)
+│   └── logs/                    # Stata .log files
+├── Literature/                  # Reference papers and notes
 ├── quality_reports/             # Plans, session logs, merge reports
 ├── explorations/                # Research sandbox (see rules)
 ├── templates/                   # Session log, quality report templates
-└── master_supporting_docs/      # Papers and existing slides
+└── References/                  # Bibliography files (.bib or reference lists)
 ```
 
 ---
@@ -45,17 +59,21 @@
 ## Commands
 
 ```bash
-# LaTeX (3-pass, XeLaTeX only)
-cd Slides && TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
-BIBINPUTS=..:$BIBINPUTS bibtex file
-TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
-TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
+# Stata execution via MCP
+# Use stata-mcp tools: stata_do, write_dofile, append_dofile, read_log, get_data_info
 
-# Deploy Quarto to GitHub Pages
-./scripts/sync_to_docs.sh LectureN
+# Run a do-file
+stata_do: "do Code/master.do"
 
-# Quality score
-python scripts/quality_score.py Quarto/file.qmd
+# Check data structure
+get_data_info: "Data/derived/analysis_sample.dta"
+
+# Read Stata log for errors
+read_log: "Output/logs/analysis.log"
+
+# Word document generation
+# Use python-docx via bash for programmatic .docx creation
+python3 scripts/generate_paper.py
 ```
 
 ---
@@ -65,8 +83,8 @@ python scripts/quality_score.py Quarto/file.qmd
 | Score | Gate | Meaning |
 |-------|------|---------|
 | 80 | Commit | Good enough to save |
-| 90 | PR | Ready for deployment |
-| 95 | Excellence | Aspirational |
+| 90 | PR | Ready for co-author review |
+| 95 | Excellence | Ready for submission |
 
 ---
 
@@ -74,63 +92,56 @@ python scripts/quality_score.py Quarto/file.qmd
 
 | Command | What It Does |
 |---------|-------------|
-| `/compile-latex [file]` | 3-pass XeLaTeX + bibtex |
-| `/deploy [LectureN]` | Render Quarto + sync to docs/ |
-| `/extract-tikz [LectureN]` | TikZ → PDF → SVG |
-| `/proofread [file]` | Grammar/typo/overflow review |
-| `/visual-audit [file]` | Slide layout audit |
-| `/pedagogy-review [file]` | Narrative, notation, pacing review |
-| `/review-r [file]` | R code quality review |
-| `/qa-quarto [LectureN]` | Adversarial Quarto vs Beamer QA |
-| `/slide-excellence [file]` | Combined multi-agent review |
-| `/translate-to-quarto [file]` | Beamer → Quarto translation |
-| `/validate-bib` | Cross-reference citations |
-| `/devils-advocate` | Challenge slide design |
-| `/create-lecture` | Full lecture creation |
+| `/run-stata [file]` | Execute do-file via MCP, check log for errors |
+| `/create-docx [section]` | Generate or update Word document section |
+| `/format-table [file]` | Convert Stata output to publication-ready Word table |
+| `/proofread [file]` | Grammar/typo/consistency review |
+| `/review-paper [file]` | Full manuscript review with referee objections |
+| `/review-stata [file]` | Stata code quality and reproducibility review |
+| `/validate-references` | Cross-reference citations in paper |
+| `/devils-advocate` | Challenge identification strategy and research design |
 | `/commit [msg]` | Stage, commit, PR, merge |
 | `/lit-review [topic]` | Literature search + synthesis |
 | `/research-ideation [topic]` | Research questions + strategies |
 | `/interview-me [topic]` | Interactive research interview |
-| `/review-paper [file]` | Manuscript review |
-| `/data-analysis [dataset]` | End-to-end R analysis |
+| `/data-analysis [dataset]` | End-to-end Stata analysis pipeline |
 | `/learn [skill-name]` | Extract discovery into persistent skill |
 | `/context-status` | Show session health + context usage |
 | `/deep-audit` | Repository-wide consistency audit |
 
 ---
 
-<!-- CUSTOMIZE: Replace the example entries below with your own
-     Beamer environments and Quarto CSS classes. These are examples
-     from the original project — delete them and add yours. -->
+## Stata Conventions (Summary)
 
-## Beamer Custom Environments
-
-| Environment       | Effect        | Use Case       |
-|-------------------|---------------|----------------|
-| `[your-env]`      | [Description] | [When to use]  |
-
-<!-- Example entries (delete and replace with yours):
-| `keybox` | Gold background box | Key points |
-| `highlightbox` | Gold left-accent box | Highlights |
-| `definitionbox[Title]` | Blue-bordered titled box | Formal definitions |
--->
-
-## Quarto CSS Classes
-
-| Class              | Effect        | Use Case       |
-|--------------------|---------------|----------------|
-| `[.your-class]`    | [Description] | [When to use]  |
-
-<!-- Example entries (delete and replace with yours):
-| `.smaller` | 85% font | Dense content slides |
-| `.positive` | Green bold | Good annotations |
--->
+| Convention | Rule |
+|------------|------|
+| Random seed | `set seed YYYYMMDD` at top of every do-file |
+| Logging | `log using "Output/logs/filename.log", replace text` |
+| Paths | All relative to project root; set in `00_setup.do` via globals |
+| Packages | Document all `ssc install` in `00_setup.do` |
+| Output | `esttab` / `outreg2` → `.csv` or `.rtf` in `Output/tables/` |
+| Figures | `graph export` → `.png` (300dpi) in `Output/figures/` |
 
 ---
 
-## Current Project State
+## Word Document Standards (Summary)
 
-| Lecture | Beamer | Quarto | Key Content |
-|---------|--------|--------|-------------|
-| 1: [Topic] | `Lecture01_Topic.tex` | `Lecture1_Topic.qmd` | [Brief description] |
-| 2: [Topic] | `Lecture02_Topic.tex` | -- | [Brief description] |
+| Element | Standard |
+|---------|----------|
+| Font | Times New Roman 12pt, 1.5 line spacing |
+| Margins | 1 inch all sides |
+| Tables | AER/QJE style: three-line format, SE in parentheses |
+| Figures | Centered, numbered, descriptive titles below |
+| Citations | Author-year format (APA/AER style) |
+| Sections | Introduction, Literature, Data, Method, Results, Robustness, Conclusion |
+
+---
+
+## Current Paper State
+
+<!-- Update this table as you work on specific papers.
+     For a new paper, add a row. Move details to MEMORY.md. -->
+
+| Paper | Status | Key Files | Notes |
+|-------|--------|-----------|-------|
+| [Paper 1 Title] | [Draft/Analysis/Revision] | `Code/02_analysis/main_reg.do` | [Brief note] |
