@@ -17,56 +17,76 @@ When a mistake is corrected, append a `[LEARN:category]` entry below.
 
 [LEARN:workflow] Plans, specs, and session logs must live on disk (not just in conversation) to survive compression and session boundaries. Quality reports only at merge time.
 
+## Stata Conventions
+
+[LEARN:stata] Stata connects via MCP (stata-mcp). Use `stata_do` to run code, `write_dofile` / `append_dofile` to create do-files, `read_log` to check output, `get_data_info` for descriptive statistics.
+
+[LEARN:stata] Every do-file must start with: `set seed YYYYMMDD`, `log using "Output/logs/filename.log", replace text`, and load global paths from `00_setup.do`.
+
+[LEARN:stata] All paths in do-files are relative to project root. Set globals in `00_setup.do`: `global root "..."`, `global data "$root/Data"`, `global output "$root/Output"`, etc.
+
+[LEARN:stata] Document all user-written packages in `00_setup.do` with `ssc install` commands. Common packages: `reghdfe`, `estout`, `ftools`, `coefplot`, `binscatter`, `did`, `csdid`, `eventstudyinteract`, `hdfe`.
+
+[LEARN:stata] Use `esttab` (from `estout`) for regression tables → export to `.csv` or `.rtf`. Use `graph export` for figures → `.png` at 300dpi. All raw output goes to `Output/tables/` or `Output/figures/`.
+
+[LEARN:stata] Always check log files after running do-files. Search for `error`, `r(...)`, `no observations`, `variable not found` — silent failures in Stata are common and dangerous.
+
+## Word Document Standards
+
+[LEARN:docx] Paper output is Word (.docx). Use python-docx for programmatic generation when needed. Manual editing in Word is also fine — .docx is the authoritative prose file.
+
+[LEARN:docx] Default formatting: Times New Roman 12pt, 1.5 line spacing, 1-inch margins. Tables use three-line format (AER/QJE style). SE in parentheses, significance stars with footnote.
+
+[LEARN:docx] Standard paper structure: Introduction → Literature Review → Institutional Background/Data → Empirical Strategy → Results → Robustness → Conclusion. Adjust per target journal.
+
+[LEARN:docx] Every table and figure in the paper must reference the exact do-file and output file that produced it. Traceability is non-negotiable.
+
+## Research Design
+
+[LEARN:research] Before running regressions, write down the estimating equation, identify the variation, and state the identification assumption. Code follows theory, not the other way around.
+
+[LEARN:research] Replication-first: when working with an existing paper's data, replicate the original results EXACTLY before extending. Tolerance: <0.01 for point estimates, <0.05 for SEs. Mismatch → stop and investigate.
+
 ## Documentation Standards
 
-[LEARN:documentation] When adding new features, update BOTH README and guide immediately to prevent documentation drift. Stale docs break user trust.
+[LEARN:documentation] When adding new features, update BOTH README and guide immediately to prevent documentation drift.
 
-[LEARN:documentation] Always document new templates in README's "What's Included" section with purpose description. Template inventory must be complete and accurate.
-
-[LEARN:documentation] Guide must be generic (framework-oriented) not prescriptive. Provide templates with examples for multiple workflows (LaTeX, R, Python, Jupyter), let users customize. No "thou shalt" rules.
-
-[LEARN:documentation] Date fields in frontmatter and README must reflect latest significant changes. Users check dates to assess currency.
+[LEARN:documentation] Guide must be generic (framework-oriented) not prescriptive. Provide templates with examples, let users customize.
 
 ## Design Philosophy
 
-[LEARN:design] Framework-oriented > Prescriptive rules. Constitutional governance works as a TEMPLATE with examples users customize to their domain. Same for requirements specs.
+[LEARN:design] Framework-oriented > Prescriptive rules. Constitutional governance works as a TEMPLATE with examples users customize to their domain.
 
-[LEARN:design] Quality standard for guide additions: useful + pedagogically strong + drives usage + leaves great impression + improves upon starting fresh + no redundancy + not slow. All 7 criteria must hold.
-
-[LEARN:design] Generic means working for any academic workflow: pure LaTeX (no Quarto), pure R (no LaTeX), Python/Jupyter, any domain (not just econometrics). Test recommendations across use cases.
+[LEARN:design] Quality standard for additions: useful + pedagogically strong + drives usage + leaves great impression + improves upon starting fresh + no redundancy + not slow. All 7 criteria must hold.
 
 ## File Organization
 
-[LEARN:files] Specifications go in `quality_reports/specs/YYYY-MM-DD_description.md`, not scattered in root or other directories. Maintains structure.
+[LEARN:files] Specifications go in `quality_reports/specs/YYYY-MM-DD_description.md`. Templates in `templates/`. Do-files in `Code/` by stage (00-04). Raw data never modified in `Data/raw/`.
 
-[LEARN:files] Templates belong in `templates/` directory with descriptive names. Currently have: session-log.md, quality-report.md, exploration-readme.md, archive-readme.md, requirements-spec.md, constitutional-governance.md.
+[LEARN:files] Output separation: `Output/tables/` for raw Stata table exports, `Output/figures/` for graphs, `Output/logs/` for Stata logs. `Paper/tables/` and `Paper/figures/` for final publication-ready versions inserted into the paper.
 
 ## Constitutional Governance
 
-[LEARN:governance] Constitutional articles distinguish immutable principles (non-negotiable for quality/reproducibility) from flexible user preferences. Keep to 3-7 articles max.
+[LEARN:governance] Constitutional articles distinguish immutable principles from flexible preferences. Keep to 3-7 articles max.
 
-[LEARN:governance] Example articles: Primary Artifact (which file is authoritative), Plan-First Threshold (when to plan), Quality Gate (minimum score), Verification Standard (what must pass), File Organization (where files live).
-
-[LEARN:governance] Amendment process: Ask user if deviating from article is "amending Article X (permanent)" or "overriding for this task (one-time exception)". Preserves institutional memory.
+[LEARN:governance] Example articles for this workflow: Primary Artifact (Stata .do for analysis, .docx for prose), Plan-First Threshold (when to plan), Quality Gate (minimum score), Verification Standard (Stata runs clean + docx opens), File Organization (where files live).
 
 ## Skill Creation
 
-[LEARN:skills] Effective skill descriptions use trigger phrases users actually say: "check citations", "format results", "validate protocol" → Claude knows when to load skill.
+[LEARN:skills] Effective skill descriptions use trigger phrases users actually say: "run my regression", "format this table", "check my do-file", "draft the introduction" → Claude knows when to load skill.
 
-[LEARN:skills] Skills need 3 sections minimum: Instructions (step-by-step), Examples (concrete scenarios), Troubleshooting (common errors) → users can debug independently.
-
-[LEARN:skills] Domain-specific examples beat generic ones: citation checker (psychology), protocol validator (biology), regression formatter (economics) → shows adaptability.
+[LEARN:skills] Skills need 3 sections minimum: Instructions (step-by-step), Examples (concrete scenarios), Troubleshooting (common errors).
 
 ## Memory System
 
-[LEARN:memory] Two-tier memory solves template vs working project tension: MEMORY.md (generic patterns, committed), personal-memory.md (machine-specific, gitignored) → cross-machine sync + local privacy.
+[LEARN:memory] Two-tier memory: MEMORY.md (generic patterns, committed), personal-memory.md (machine-specific paths, Stata version, gitignored) → cross-machine sync + local privacy.
 
-[LEARN:memory] Post-merge hooks prompt reflection, don't auto-append → user maintains control while building habit.
+## Current Papers
 
-## Meta-Governance
-
-[LEARN:meta] Repository dual nature requires explicit governance: what's generic (commit) vs specific (gitignore) → prevents template pollution.
-
-[LEARN:meta] Dogfooding principles must be enforced: plan-first, spec-then-plan, quality gates, session logs → we follow our own guide.
-
-[LEARN:meta] Template development work (building infrastructure, docs) doesn't create session logs in quality_reports/ → those are for user work (slides, analysis), not meta-work. Keeps template clean for users who fork.
+<!-- When starting a new paper, add an entry here with:
+     - Paper title / working title
+     - Research question (1 sentence)
+     - Data source
+     - Identification strategy
+     - Current status
+     This section is your quick-reference for active projects. -->
